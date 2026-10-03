@@ -1,323 +1,966 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>植物圖書館遊戲</title>
+  <title>綠野圖書館：校園植物分類大冒險</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            },
+            bark: {
+              100: '#f5efe6',
+              200: '#e8dbca',
+              500: '#a27b5c',
+              700: '#634832',
+              900: '#3f2e22',
+            }
+          },
+          fontFamily: {
+            cute: ['"Comic Sans MS"', '"PingFang TC"', '"Microsoft JhengHei"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    :root {
-      --bg-color: #f4f7f4;
-      --card-bg: #ffffff;
-      --primary: #2d6a4f;
-      --primary-hover: #1b4332;
-      --accent: #d8f3dc;
-      --text: #1b262c;
-      --text-muted: #555b6e;
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(2deg); }
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+    @keyframes pulse-subtle {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
     }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 24px 16px;
+    .animate-float {
+      animation: float 4s ease-in-out infinite;
     }
-
-    header {
-      text-align: center;
-      margin-bottom: 24px;
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2.5s ease-in-out infinite;
     }
-
-    header h1 {
-      font-size: 2rem;
-      color: var(--primary);
-      margin-bottom: 8px;
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
     }
-
-    header p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
+    ::-webkit-scrollbar-track {
+      background: #f1f8f3;
     }
-
-    .game-container {
-      width: 100%;
-      max-width: 600px;
-      background: var(--card-bg);
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-      padding: 28px;
+    ::-webkit-scrollbar-thumb {
+      background: #86efac;
+      border-radius: 9999px;
     }
-
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--primary);
-    }
-
-    .card {
-      background-color: var(--accent);
-      border-radius: 12px;
-      padding: 24px;
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .plant-icon {
-      font-size: 3rem;
-      margin-bottom: 12px;
-    }
-
-    .clue-title {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: var(--primary-hover);
-      margin-bottom: 8px;
-    }
-
-    .clue-text {
-      font-size: 1rem;
-      line-height: 1.6;
-      color: var(--text);
-    }
-
-    .options-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .btn-option {
-      background: #ffffff;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-option:hover {
-      border-color: var(--primary);
-      background-color: #f7faf8;
-    }
-
-    .btn-option.correct {
-      background-color: #d1e7dd;
-      border-color: #0f5132;
-      color: #0f5132;
-    }
-
-    .btn-option.wrong {
-      background-color: #f8d7da;
-      border-color: #842029;
-      color: #842029;
-    }
-
-    .feedback {
-      min-height: 48px;
-      text-align: center;
-      font-weight: 600;
-      margin-bottom: 16px;
-      font-size: 0.95rem;
-    }
-
-    .btn-next {
-      display: block;
-      width: 100%;
-      background: var(--primary);
-      color: #ffffff;
-      border: none;
-      border-radius: 10px;
-      padding: 14px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    .btn-next:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-next:disabled {
-      background: #cccccc;
-      cursor: not-allowed;
-    }
-
-    .result-screen {
-      text-align: center;
-      padding: 20px 0;
-    }
-
-    .result-screen h2 {
-      color: var(--primary);
-      margin-bottom: 12px;
-    }
-
-    .result-screen p {
-      font-size: 1.1rem;
-      margin-bottom: 24px;
-      color: var(--text-muted);
+    /* Touch device friendly transitions */
+    .tap-highlight-none {
+      -webkit-tap-highlight-color: transparent;
     }
   </style>
 </head>
-<body>
+<body class="bg-gradient-to-b from-emerald-50 via-green-100 to-amber-50 min-h-screen text-slate-800 font-cute selection:bg-brand-300 tap-highlight-none flex flex-col justify-between">
 
-  <header>
-    <h1>🌿 植物圖書館借閱處</h1>
-    <p>根據借書證上的植物生態特徵，找出對應的植物名稱！</p>
+  <!-- TOP APP BAR -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-2 border-emerald-200 shadow-sm px-4 py-3">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="app.showScreen('welcome')">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-2xl shadow-md transform rotate-3">
+          🌱
+        </div>
+        <div>
+          <h1 class="text-lg md:text-xl font-black text-emerald-900 tracking-wide">綠野圖書館</h1>
+          <p class="text-xs text-emerald-600 font-bold hidden sm:block">校園植物分類大冒險・三年級圖資探索</p>
+        </div>
+      </div>
+
+      <!-- Controls & Status Badge -->
+      <div class="flex items-center space-x-2 md:space-x-3">
+        <div class="bg-amber-100 border border-amber-300 px-3 py-1 rounded-full flex items-center space-x-1.5 shadow-inner">
+          <span class="text-amber-500 text-base">⭐</span>
+          <span id="nav-star-count" class="font-extrabold text-amber-900 text-sm">0</span>
+          <span class="text-xs text-amber-700 font-bold">葉星</span>
+        </div>
+        <button id="sound-btn" onclick="sound.toggle()" class="p-2 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 transition active:scale-95" title="音效切換">
+          <span id="sound-icon">🔊</span>
+        </button>
+      </div>
+    </div>
   </header>
 
-  <main class="game-container">
-    <div id="quiz-area">
-      <div class="status-bar">
-        <span id="level-display">關卡：1 / 3</span>
-        <span id="score-display">探索點數：0</span>
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="flex-grow flex items-center justify-center p-3 md:p-6 w-full max-w-5xl mx-auto">
+    
+    <!-- ==================== SCREEN 0: WELCOME & STORY ==================== -->
+    <div id="screen-welcome" class="w-full max-w-3xl bg-white/95 rounded-3xl p-6 md:p-10 shadow-xl border-4 border-emerald-300 text-center">
+      <div class="inline-block p-4 bg-emerald-100 rounded-full mb-3 animate-float shadow-inner">
+        <span class="text-6xl md:text-7xl">🌳</span>
+      </div>
+      <span class="inline-block bg-emerald-100 text-emerald-800 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-2">
+        國小三年級圖書資訊專用教材
+      </span>
+      <h2 class="text-2xl md:text-4xl font-black text-slate-800 tracking-tight mb-3">
+        校園植物分類大冒險
+      </h2>
+      <p class="text-emerald-700 font-bold text-sm md:text-base max-w-xl mx-auto mb-6">
+        「哎呀！昨天的怪風把老榕樹爺爺的記憶葉片吹散了！每本書都掉出了書櫃⋯⋯快來幫書本找到正確的 0~9 類分類家吧！」
+      </p>
+
+      <!-- Key Concept Highlight Box -->
+      <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 text-left mb-6 max-w-xl mx-auto shadow-sm">
+        <div class="flex items-start space-x-3">
+          <span class="text-2xl">💡</span>
+          <div>
+            <h4 class="font-black text-amber-900 text-sm md:text-base">重要偵探守則：不要只看書名！</h4>
+            <p class="text-xs md:text-sm text-amber-800 mt-1 leading-relaxed">
+              雖然這些書都提到<strong>「花、草、樹木」</strong>，但只要<strong>主要內容</strong>不同，住的分類書櫃就完全不同喔！千萬別看到植物就直覺選「3 自然科學」！
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="plant-icon" id="plant-icon">🌱</div>
-        <div class="clue-title">借書線索</div>
-        <div class="clue-text" id="clue-text">線索載入中...</div>
+      <!-- Quick Nav Buttons -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto">
+        <button onclick="app.startStage(1)" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-lg py-3.5 px-6 rounded-2xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center space-x-2">
+          <span>📖 第一站：分類小教室</span>
+        </button>
+        <button onclick="app.startStage(2)" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-lg py-3.5 px-6 rounded-2xl shadow-lg shadow-amber-500/30 transition flex items-center justify-center space-x-2">
+          <span>🚀 直接開始闖關尋寶</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN 1: CLASSIFICATION MINI-GUIDE (小教室) ==================== -->
+    <div id="screen-guide" class="w-full max-w-4xl bg-white/95 rounded-3xl p-5 md:p-8 shadow-xl border-4 border-emerald-300 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-emerald-100 gap-2">
+        <div>
+          <span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2.5 py-1 rounded-full">第一站</span>
+          <h2 class="text-xl md:text-2xl font-black text-slate-800 mt-1">植物的十大分類之家 (0~9 類)</h2>
+        </div>
+        <p class="text-xs md:text-sm text-emerald-700 font-medium">點選卡片查看「校園植物」如何分家！</p>
       </div>
 
-      <div class="options-grid" id="options-grid"></div>
+      <!-- 10 Categories Grid -->
+      <div id="guide-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 max-h-[55vh] overflow-y-auto p-1">
+        <!-- Rendered via JS -->
+      </div>
 
-      <div class="feedback" id="feedback"></div>
+      <!-- Detail Card (Interactive) -->
+      <div id="guide-detail-card" class="mt-4 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 transition-all flex items-start space-x-3">
+        <div id="g-detail-icon" class="text-3xl p-2 bg-white rounded-xl shadow-sm">🌿</div>
+        <div class="text-left flex-grow">
+          <div class="flex items-center space-x-2">
+            <span id="g-detail-num" class="bg-emerald-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">300號櫃</span>
+            <h3 id="g-detail-title" class="font-extrabold text-emerald-900 text-sm md:text-base">自然科學類</h3>
+          </div>
+          <p id="g-detail-tip" class="text-xs md:text-sm text-emerald-800 mt-1">點選上方卡片，看看不同分類裡的植物小秘密！</p>
+          <p id="g-detail-example" class="text-xs text-emerald-600 font-bold mt-1 bg-white/70 px-2 py-1 rounded-lg inline-block">📘 範例：點選卡片查看</p>
+        </div>
+      </div>
 
-      <button id="next-btn" class="btn-next" disabled>下一本藏書</button>
+      <div class="mt-5 flex justify-end">
+        <button onclick="app.startStage(2)" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-base py-3 px-8 rounded-2xl shadow-md transition flex items-center space-x-2">
+          <span>前往第二站：尋寶挑戰</span>
+          <span>➜</span>
+        </button>
+      </div>
     </div>
 
-    <div id="result-area" class="result-screen" style="display: none;">
-      <h2>🎉 借閱登記完成！</h2>
-      <p id="final-score-text"></p>
-      <button class="btn-next" onclick="restartGame()">重新整理書單</button>
+    <!-- ==================== SCREEN 2: SCENARIO QUIZ (綠野尋寶闖關) ==================== -->
+    <div id="screen-quiz" class="w-full max-w-3xl bg-white/95 rounded-3xl p-5 md:p-8 shadow-xl border-4 border-emerald-300 hidden">
+      <!-- Progress & Combo -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-2">
+          <span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-3 py-1 rounded-full">第二站・尋寶問答</span>
+          <span id="quiz-question-num" class="text-xs font-bold text-slate-500">第 1 / 10 題</span>
+        </div>
+        <div class="w-36 md:w-48 bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
+          <div id="quiz-progress-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: 10%;"></div>
+        </div>
+      </div>
+
+      <!-- Book Card Presentation -->
+      <div class="bg-gradient-to-br from-bark-100 to-amber-50 border-2 border-bark-200 rounded-3xl p-5 md:p-6 mb-5 relative shadow-inner text-left">
+        <div class="absolute -top-3 right-4 bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full shadow">
+          尋獲的記憶葉片
+        </div>
+        <div class="flex items-start space-x-4">
+          <div id="quiz-book-cover" class="w-16 h-20 md:w-20 md:h-24 bg-white rounded-xl shadow-md border-2 border-emerald-300 flex flex-col items-center justify-center text-3xl shrink-0">
+            🌳
+          </div>
+          <div>
+            <h3 id="quiz-book-title" class="text-lg md:text-xl font-black text-bark-900 leading-snug">
+              書名載入中...
+            </h3>
+            <p class="text-xs text-bark-700 font-bold mt-1">【書中主要內容】：</p>
+            <p id="quiz-book-desc" class="text-xs md:text-sm text-slate-700 mt-0.5 leading-relaxed bg-white/80 p-2.5 rounded-xl border border-bark-200">
+              內容描述載入中...
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-center font-bold text-slate-600 text-xs md:text-sm mb-3">
+        🔍 偵探思考：根據<strong>內容線索</strong>，這本書應該送到幾號書櫃？
+      </p>
+
+      <!-- 4 Option Buttons (Touch & keyboard 1~4) -->
+      <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Explanation Feedback Card -->
+      <div id="quiz-feedback-box" class="hidden p-4 rounded-2xl border-2 mb-4 text-left transition-all">
+        <div class="flex items-start space-x-2">
+          <span id="quiz-feedback-icon" class="text-2xl"></span>
+          <div>
+            <h4 id="quiz-feedback-title" class="font-black text-sm md:text-base"></h4>
+            <p id="quiz-feedback-text" class="text-xs md:text-sm mt-1"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Button -->
+      <button id="quiz-next-btn" onclick="quiz.next()" class="hidden w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black py-3 rounded-2xl shadow-md transition text-base">
+        繼續下一題 ➔
+      </button>
     </div>
+
+    <!-- ==================== SCREEN 3: DRAG & DROP BOOKSHELVES (飛葉分類場) ==================== -->
+    <div id="screen-drag" class="w-full max-w-4xl bg-white/95 rounded-3xl p-5 md:p-8 shadow-xl border-4 border-emerald-300 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-emerald-100 gap-2 text-left">
+        <div>
+          <span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2.5 py-1 rounded-full">第三站</span>
+          <h2 class="text-lg md:text-xl font-black text-slate-800">飛葉歸位場：將書放進正確書櫃！</h2>
+        </div>
+        <div class="text-xs text-slate-500 font-bold">
+          剩餘需歸位：<span id="drag-remaining-count" class="text-emerald-600 font-extrabold text-sm">5</span> 本
+        </div>
+      </div>
+
+      <!-- Current Active Book (Tap or Drag) -->
+      <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 md:p-4 mb-4 text-left flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div id="current-drag-book-icon" class="text-3xl p-2 bg-white rounded-xl shadow-sm">🌿</div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="bg-amber-200 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full">現在待分類</span>
+              <h3 id="current-drag-book-title" class="font-extrabold text-slate-900 text-sm md:text-base">書名</h3>
+            </div>
+            <p id="current-drag-book-clue" class="text-xs text-slate-600 mt-1 line-clamp-1">提示內容</p>
+          </div>
+        </div>
+        <span class="text-xs font-bold text-amber-700 hidden sm:inline-block bg-white px-2.5 py-1.5 rounded-xl border border-amber-200">
+          👇 請點擊下方正確書櫃
+        </span>
+      </div>
+
+      <!-- Target Bookshelves (0 ~ 9) -->
+      <div id="shelves-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 max-h-[48vh] overflow-y-auto p-1">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN 4: BOSS BATTLE (混亂枯葉怪) ==================== -->
+    <div id="screen-boss" class="w-full max-w-3xl bg-slate-900 rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-amber-400 text-white text-center hidden relative overflow-hidden">
+      <!-- Ambient Monster Aura -->
+      <div class="absolute -top-10 -right-10 w-40 h-40 bg-purple-600/30 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-amber-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-3 relative z-10">
+        <span class="bg-amber-400 text-slate-950 font-black text-xs px-3 py-1 rounded-full uppercase">終極大決戰</span>
+        <div class="flex items-center space-x-2 text-xs">
+          <span class="text-slate-400">連擊 Combo:</span>
+          <span id="boss-combo" class="text-amber-400 font-extrabold text-base">0</span>
+        </div>
+      </div>
+
+      <!-- Boss Animation Area -->
+      <div class="py-2 text-center relative z-10">
+        <div id="boss-sprite" class="text-6xl md:text-7xl animate-float inline-block select-none">
+          🥀
+        </div>
+        <h3 class="text-xl font-black text-amber-300 mt-2">混亂枯葉怪</h3>
+        <p class="text-xs text-slate-300 max-w-sm mx-auto mt-0.5">
+          枯葉怪試圖用「書名花招」混淆分類！快抓住核心線索擊敗它！
+        </p>
+
+        <!-- Boss HP Bar -->
+        <div class="w-48 md:w-64 bg-slate-800 h-3 rounded-full mx-auto mt-2 overflow-hidden border border-slate-700">
+          <div id="boss-hp-bar" class="h-full bg-gradient-to-r from-red-500 to-amber-400 w-full transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <!-- Rapid Question Card -->
+      <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-4 my-3 text-left relative z-10">
+        <span class="text-[10px] font-bold text-amber-400 uppercase tracking-widest">★ 枯葉怪的混淆問題</span>
+        <h4 id="boss-question-title" class="text-base md:text-lg font-black text-white mt-1">問題載入中...</h4>
+        <p id="boss-question-desc" class="text-xs text-slate-300 mt-1">關鍵線索載入中...</p>
+      </div>
+
+      <!-- Boss Options Grid -->
+      <div id="boss-options-grid" class="grid grid-cols-2 gap-2.5 relative z-10">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- ==================== SCREEN 5: FINAL SUMMARY & BADGE ==================== -->
+    <div id="screen-summary" class="w-full max-w-2xl bg-white/95 rounded-3xl p-6 md:p-8 shadow-xl border-4 border-emerald-300 text-center hidden">
+      <div class="inline-block p-4 bg-amber-100 rounded-full mb-2 animate-bounce">
+        <span class="text-5xl md:text-6xl">🏅</span>
+      </div>
+      <h2 class="text-2xl md:text-3xl font-black text-slate-900">恭喜成為【特級校園植物小偵探】！</h2>
+      <p class="text-emerald-700 font-bold text-sm mt-1">老榕樹爺爺的記憶葉片全部歸位，校園重現綠意蓬勃！</p>
+
+      <!-- Score Box -->
+      <div class="grid grid-cols-3 gap-3 my-5 max-w-md mx-auto">
+        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+          <span class="text-xs text-emerald-700 font-bold block">獲得綠葉星</span>
+          <span id="final-star-count" class="text-2xl font-black text-emerald-800">0</span>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3">
+          <span class="text-xs text-amber-700 font-bold block">偵探正確率</span>
+          <span id="final-accuracy" class="text-2xl font-black text-amber-800">100%</span>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3">
+          <span class="text-xs text-blue-700 font-bold block">榮譽階級</span>
+          <span class="text-xl font-black text-blue-800">特級巡查員</span>
+        </div>
+      </div>
+
+      <!-- Real World Mission Card -->
+      <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-2xl p-4 text-left mb-6 shadow-sm">
+        <div class="flex items-center space-x-2 text-emerald-800 mb-2">
+          <span class="text-xl">🎒</span>
+          <h4 class="font-black text-sm md:text-base">延伸實體任務：圖書館尋綠探險</h4>
+        </div>
+        <p class="text-xs md:text-sm text-slate-700 leading-relaxed">
+          請小偵探在這週前往學校圖書館，實際完成以下任務：
+        </p>
+        <ul class="text-xs md:text-sm text-emerald-900 mt-2 space-y-1.5 list-disc list-inside font-bold bg-white/70 p-3 rounded-xl border border-emerald-200">
+          <li>借 <strong>2 本</strong>跟「植物或大自然」有關的書籍。</li>
+          <li>注意！這 2 本書書背上的<strong>分類號第一碼必須不一樣</strong>（例如一本是 3xx 自然類、一本是 8xx 文學童話類）。</li>
+          <li>回到班上與同學分享：這兩本書分別是幾號櫃的植物秘密！</li>
+        </ul>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button onclick="app.restart()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-6 rounded-2xl transition active:scale-95 shadow-md">
+          🔄 重新再玩一次
+        </button>
+        <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-6 rounded-2xl transition active:scale-95 border border-slate-300">
+          🖨️ 列印榮譽任務卡
+        </button>
+      </div>
+    </div>
+
   </main>
 
+  <!-- FOOTER -->
+  <footer class="py-3 text-center text-xs text-emerald-800/80 font-bold">
+    綠野圖書館・國小圖書資訊利用教育互動課件 🍃 依據中文圖書分類法改編
+  </footer>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
   <script>
-    const questions = [
-      {
-        icon: "🪴",
-        clue: "葉片肥厚多汁，排列呈蓮花座狀，常被種植在辦公桌或庭園角落，象徵富貴與吉祥。",
-        options: ["石蓮花", "薄荷", "桂花", "蒲公英"],
-        answer: 0,
-        desc: "石蓮花屬於景天科多肉植物，葉片多肉質且排列似蓮花。"
+    // Synthesized Web Audio sound effects (zero external audio files)
+    const sound = {
+      enabled: true,
+      ctx: null,
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
       },
-      {
-        icon: "🌺",
-        clue: "花瓣層層疊疊，顏色多變常見大紅色，是校園與綠籬極受歡迎的常綠灌木。",
-        options: ["九重葛", "重瓣朱槿", "山茶花", "繁星花"],
-        answer: 1,
-        desc: "重瓣朱槿為錦葵科木槿屬，花大且花瓣重疊，四季開花。"
+
+      toggle() {
+        this.enabled = !this.enabled;
+        const icon = document.getElementById('sound-icon');
+        icon.textContent = this.enabled ? '🔊' : '🔇';
+        if (this.enabled && this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
       },
-      {
-        icon: "⭐",
-        clue: "聚繖花序頂生，一朵朵微小的小花外觀呈現可愛的五角星形，深受蝴蝶喜愛。",
-        options: ["黃金葛", "牽牛花", "繁星花", "向日葵"],
-        answer: 2,
-        desc: "繁星花花冠筒狀，先端五裂呈星形，蜜源豐富常吸引蝶類。"
-      }
-    ];
 
-    let currentIdx = 0;
-    let score = 0;
-    let answered = false;
+      playCorrect() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
 
-    const levelDisplay = document.getElementById("level-display");
-    const scoreDisplay = document.getElementById("score-display");
-    const plantIcon = document.getElementById("plant-icon");
-    const clueText = document.getElementById("clue-text");
-    const optionsGrid = document.getElementById("options-grid");
-    const feedback = document.getElementById("feedback");
-    const nextBtn = document.getElementById("next-btn");
-    const quizArea = document.getElementById("quiz-area");
-    const resultArea = document.getElementById("result-area");
-    const finalScoreText = document.getElementById("final-score-text");
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
 
-    function renderQuestion() {
-      answered = false;
-      const q = questions[currentIdx];
-      levelDisplay.textContent = `關卡：${currentIdx + 1} / ${questions.length}`;
-      plantIcon.textContent = q.icon;
-      clueText.textContent = q.clue;
-      feedback.textContent = "";
-      feedback.style.color = "inherit";
-      nextBtn.disabled = true;
-      optionsGrid.innerHTML = "";
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
 
-      q.options.forEach((opt, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "btn-option";
-        btn.textContent = opt;
-        btn.onclick = () => selectOption(idx, btn);
-        optionsGrid.appendChild(btn);
-      });
-    }
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
 
-    function selectOption(selectedIdx, btnElement) {
-      if (answered) return;
-      answered = true;
-      const q = questions[currentIdx];
-      const buttons = optionsGrid.querySelectorAll(".btn-option");
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
 
-      if (selectedIdx === q.answer) {
-        btnElement.classList.add("correct");
-        score += 10;
-        scoreDisplay.textContent = `探索點數：${score}`;
-        feedback.textContent = `正解！${q.desc}`;
-        feedback.style.color = "#0f5132";
-      } else {
-        btnElement.classList.add("wrong");
-        buttons[q.answer].classList.add("correct");
-        feedback.textContent = `差一點！正確答案是「${q.options[q.answer]}」。${q.desc}`;
-        feedback.style.color = "#842029";
-      }
+        osc.start(now);
+        osc.stop(now + 0.35);
+      },
 
-      nextBtn.disabled = false;
-    }
+      playWrong() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
 
-    nextBtn.onclick = () => {
-      currentIdx++;
-      if (currentIdx < questions.length) {
-        renderQuestion();
-      } else {
-        showResult();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now); // A3
+        osc.frequency.linearRampToValueAtTime(140, now + 0.25);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.25);
+      },
+
+      playPop() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.08);
       }
     };
 
-    function showResult() {
-      quizArea.style.display = "none";
-      resultArea.style.display = "block";
-      finalScoreText.textContent = `你在本次植物圖書館探索中獲得了 ${score} 點（共 ${questions.length * 10} 點）！`;
-    }
+    // 0~9 Categories Definitions
+    const CATEGORIES = [
+      { id: 0, code: '000', name: '總類', icon: '📚', tip: '大百科、圖鑑索引、萬百科知識', plantExample: '《植物小百科全書》' },
+      { id: 1, code: '100', name: '哲學類', icon: '🧠', tip: '思考做人道理、像大樹一樣堅強', plantExample: '《從向日葵學樂觀人生》' },
+      { id: 2, code: '200', name: '宗教類', icon: '🕊️', tip: '拜拜、菩提樹聖樹傳說與信仰', plantExample: '《菩提樹與佛教傳說故事》' },
+      { id: 3, code: '300', name: '自然科學', icon: '🔬', tip: '光合作用、種子構造、葉片細胞', plantExample: '《榕樹根部吸收水分的秘密》' },
+      { id: 4, code: '400', name: '應用科學', icon: '🌱', tip: '種菜做花肥、中藥草防蚊液、做料理', plantExample: '《校園香草盆栽與薄荷防蚊液自己做》' },
+      { id: 5, code: '500', name: '社會科學', icon: '⚖️', tip: '茶葉貿易賺錢、老樹保護法律法規', plantExample: '《一株茶樹如何改變台灣經濟與貿易》' },
+      { id: 6, code: '600', name: '中國史地', icon: '🗺️', tip: '台灣古道神木、各縣市老樹地理分佈', plantExample: '《走讀台灣阿里山神木與歷史老樹》' },
+      { id: 7, code: '700', name: '世界史地', icon: '🌍', tip: '世界各國名勝、非洲大樹與部落歷史', plantExample: '《馬達加斯加島的猴麵包樹與沙漠生活》' },
+      { id: 8, code: '800', name: '語文學', icon: '📖', tip: '植物童詩集、童話故事、成語典故', plantExample: '《校園鳳凰木的童詩集》' },
+      { id: 9, code: '900', name: '藝術類', icon: '🎨', tip: '落葉拼貼畫、水彩畫大樹、押花書籤', plantExample: '《撿落葉做拼貼與花草水彩畫技巧》' },
+    ];
 
-    function restartGame() {
-      currentIdx = 0;
-      score = 0;
-      scoreDisplay.textContent = `探索點數：${score}`;
-      resultArea.style.display = "none";
-      quizArea.style.display = "block";
-      renderQuestion();
-    }
+    // Stage 2 Questions (Carefully debunking "Everything is 3")
+    const QUIZ_QUESTIONS = [
+      {
+        title: '《神奇草藥師：校園薄荷防蚊液與艾草香皂動手做》',
+        desc: '這本書教小朋友採集校園花圃的薄荷與艾草，萃取精油製作防蚊液與手工皂，解決夏日蚊蟲叮咬的問題。',
+        icon: '🌿',
+        correctCat: 4,
+        options: [3, 4, 8, 9],
+        reason: '這本書的重點是「應用植物於生活解決問題」（園藝應用、生活醫學製作），因此屬於 4 類（應用科學），不是純粹探討細胞結構的 3 類喔！'
+      },
+      {
+        title: '《大樹與微風的悄悄話：校園植物童詩精選》',
+        desc: '這本書收錄了全台灣國小學生創作的優美童詩，把校園的木棉花比喻成紅紅的羽毛筆，充滿浪漫與想像力。',
+        icon: '📝',
+        correctCat: 8,
+        options: [0, 3, 8, 9],
+        reason: '雖然主題是寫植物，但它是「童詩創作與文學欣賞」，所以要歸在 8 類（語文學）！'
+      },
+      {
+        title: '《葉綠素工廠運轉中：揭開植物光合作用與水分蒸散的奧秘》',
+        desc: '書中用顯微鏡照片，帶領讀者觀察榕樹葉片氣孔如何開合、水分如何從根部輸送到頂端，詳細說明植物生理結構。',
+        icon: '🔬',
+        correctCat: 3,
+        options: [1, 3, 4, 7],
+        reason: '這本書深入探討植物的構造、細胞光合作用原理，屬於純粹探究大自然的科學原理，正是 3 類（自然科學）！'
+      },
+      {
+        title: '《四季落葉魔法書：用校園落葉與花瓣做美感拼貼與押花》',
+        desc: '書中教小朋友撿起落下的楓葉、杜鵑花瓣，壓平乾燥後組合成漂亮的書籤、卡片與動物拼貼畫。',
+        icon: '🎨',
+        correctCat: 9,
+        options: [3, 4, 8, 9],
+        reason: '這本書的教學目的是美勞創作、押花藝術與美感設計，因此要送到 9 類（藝術）書櫃！'
+      },
+      {
+        title: '《走過百年的綠色守護者：台灣各縣市珍貴老樹尋訪地圖》',
+        desc: '作者走訪台灣各鄉鎮，記錄百年榕樹、樟樹的位置、周邊老街開拓的歷史以及地理環境變遷。',
+        icon: '🗺️',
+        correctCat: 6,
+        options: [3, 5, 6, 7],
+        reason: '介紹台灣本土特定地理區域與地方歷史變遷的書籍，屬於 6 類（中國史地 / 台灣史地）！'
+      },
+      {
+        title: '《全球植物大百科：世界三萬種奇花異草完全檢索手冊》',
+        desc: '這套厚厚的大套書匯整了全世界的植物名錄、科屬索引與萬科總整理，讓大家查資料時使用。',
+        icon: '📚',
+        correctCat: 0,
+        options: [0, 3, 4, 5],
+        reason: '具備工具書性質、匯集全方位綜合知識的大型圖書與百科，屬於 0 類（總類）！'
+      },
+      {
+        title: '《像向日葵一樣向陽：給小學生的暖心抗挫折哲學》',
+        desc: '作者透過向日葵追隨陽光生長、竹子在暴風中彎腰卻不折斷的故事，教導小朋友在遇到困難時如何調適心情、建立樂觀心態。',
+        icon: '🧠',
+        correctCat: 1,
+        options: [1, 3, 5, 8],
+        reason: '用植物的故事引導人生的省思、情緒管理與哲學思想，屬於 1 類（哲學與心理）！'
+      },
+      {
+        title: '《茶葉與樟腦的跨國航線：十九世紀台灣經濟與海關貿易》',
+        desc: '詳細探討十九世紀台灣的茶樹與樟樹如何外銷到英國、美國，帶動台灣經濟崛起與社會制度變化的專書。',
+        icon: '💰',
+        correctCat: 5,
+        options: [3, 4, 5, 6],
+        reason: '探討商業貿易、國際經濟與社會體制運作的書籍，屬於 5 類（社會科學）！'
+      },
+      {
+        title: '《菩提樹下悟道：世界宗教聖樹與神話典故》',
+        desc: '介紹佛教中釋迦牟尼在菩提樹下的故事，以及基督教中的橄欖枝、各民族神廟祭祀植物的神聖象徵。',
+        icon: '🕊️',
+        correctCat: 2,
+        options: [1, 2, 3, 8],
+        reason: '聚焦在神話信仰、宗教儀式與神聖象徵的探討，屬於 2 類（宗教類）！'
+      },
+      {
+        title: '《穿越馬達加斯加：走進非洲猴麵包樹巨木王國》',
+        desc: '詳細介紹非洲島國馬達加斯加的地理氣候，以及當地居民如何利用巨大猴麵包樹當儲水槽的特殊生活文化歷史。',
+        icon: '🌍',
+        correctCat: 7,
+        options: [3, 6, 7, 9],
+        reason: '介紹世界其他國家（非本國）之地理風土、文化與歷史的專書，屬於 7 類（世界史地）！'
+      }
+    ];
 
-    renderQuestion();
+    // Stage 3 Books for Drag-and-drop
+    const DRAG_BOOKS = [
+      { id: 'b1', title: '《校園榕樹的維管束顯微觀察》', clue: '觀察葉片細胞與水分運輸', targetCat: 3, icon: '🔬' },
+      { id: 'b2', title: '《大樹爺爺的夢境：植物短篇童話》', clue: '擬人化的校園樹精靈故事', targetCat: 8, icon: '📖' },
+      { id: 'b3', title: '《教你用水彩繪出校園阿勃勒》', clue: '繪畫技法與落花色彩調配', targetCat: 9, icon: '🎨' },
+      { id: 'b4', title: '《自己的蔬菜自己種：小學生校園菜園實作》', clue: '鬆土施肥與家庭栽種實用技術', targetCat: 4, icon: '🥕' },
+      { id: 'b5', title: '《小學生植物大百科辭典》', clue: '全方位工具查詢書與總目錄', targetCat: 0, icon: '📚' }
+    ];
+
+    // Stage 4 Boss Rapid Questions
+    const BOSS_QUESTIONS = [
+      {
+        title: '《校園鳳凰木樹冠落花水彩寫生指南》',
+        clue: '重點：教你如何取景調色畫出花瓣美感。',
+        correct: 9,
+        options: [{ id: 3, name: '300 自然' }, { id: 9, name: '900 藝術' }]
+      },
+      {
+        title: '《樟腦與台灣森林伐採保護法規史》',
+        clue: '重點：國家如何透過法律規範保護老樹資源。',
+        correct: 5,
+        options: [{ id: 5, name: '500 社會' }, { id: 3, name: '300 自然' }]
+      },
+      {
+        title: '《樟樹葉子的細胞分裂與葉綠體運動》',
+        clue: '重點：顯微鏡下的植物細胞科學實驗。',
+        correct: 3,
+        options: [{ id: 3, name: '300 自然' }, { id: 4, name: '400 應用' }]
+      },
+      {
+        title: '《校園薄荷手作清涼薄荷膏家庭秘方》',
+        clue: '重點：萃取植物做生活止癢膏。',
+        correct: 4,
+        options: [{ id: 3, name: '300 自然' }, { id: 4, name: '400 應用' }]
+      }
+    ];
+
+    const app = {
+      stars: 0,
+      totalAnswered: 0,
+      correctAnswered: 0,
+
+      init() {
+        this.renderGuideCards();
+        this.updateStarUI();
+      },
+
+      addStars(num) {
+        this.stars += num;
+        this.updateStarUI();
+      },
+
+      updateStarUI() {
+        document.getElementById('nav-star-count').textContent = this.stars;
+        const finalStar = document.getElementById('final-star-count');
+        if (finalStar) finalStar.textContent = this.stars;
+      },
+
+      showScreen(screenId) {
+        sound.playPop();
+        const screens = ['screen-welcome', 'screen-guide', 'screen-quiz', 'screen-drag', 'screen-boss', 'screen-summary'];
+        screens.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add('hidden');
+        });
+        const target = document.getElementById(`screen-${screenId}`);
+        if (target) target.classList.remove('hidden');
+      },
+
+      startStage(stageNumber) {
+        if (stageNumber === 1) {
+          this.showScreen('guide');
+        } else if (stageNumber === 2) {
+          quiz.start();
+        } else if (stageNumber === 3) {
+          dragStage.start();
+        } else if (stageNumber === 4) {
+          bossStage.start();
+        }
+      },
+
+      renderGuideCards() {
+        const container = document.getElementById('guide-grid');
+        if (!container) return;
+        container.innerHTML = '';
+
+        CATEGORIES.forEach(cat => {
+          const card = document.createElement('button');
+          card.className = "flex flex-col items-center justify-center p-3 rounded-2xl bg-white hover:bg-emerald-50 border-2 border-emerald-100 hover:border-emerald-400 shadow-sm transition active:scale-95 text-center group";
+          card.onclick = () => this.selectGuideCard(cat);
+          card.innerHTML = `
+            <span class="text-2xl md:text-3xl mb-1 group-hover:scale-110 transition">${cat.icon}</span>
+            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">${cat.code}</span>
+            <span class="text-xs md:text-sm font-black text-slate-800 mt-1">${cat.name}</span>
+          `;
+          container.appendChild(card);
+        });
+      },
+
+      selectGuideCard(cat) {
+        sound.playPop();
+        document.getElementById('g-detail-icon').textContent = cat.icon;
+        document.getElementById('g-detail-num').textContent = `${cat.code}號櫃`;
+        document.getElementById('g-detail-title').textContent = `${cat.name} (${cat.tip})`;
+        document.getElementById('g-detail-tip').textContent = `🌿 植物偵探線索：只要內容是「${cat.tip}」，就選這櫃！`;
+        document.getElementById('g-detail-example').textContent = `📘 範例：${cat.plantExample}`;
+      },
+
+      finishAdventure() {
+        const accuracy = this.totalAnswered > 0 
+          ? Math.round((this.correctAnswered / this.totalAnswered) * 100) 
+          : 100;
+        document.getElementById('final-accuracy').textContent = `${accuracy}%`;
+        this.showScreen('summary');
+      },
+
+      restart() {
+        this.stars = 0;
+        this.totalAnswered = 0;
+        this.correctAnswered = 0;
+        this.updateStarUI();
+        this.showScreen('welcome');
+      }
+    };
+
+    const quiz = {
+      index: 0,
+      answered: false,
+
+      start() {
+        this.index = 0;
+        app.showScreen('quiz');
+        this.renderQuestion();
+      },
+
+      renderQuestion() {
+        this.answered = false;
+        const q = QUIZ_QUESTIONS[this.index];
+        const total = QUIZ_QUESTIONS.length;
+
+        // UI Updates
+        document.getElementById('quiz-question-num').textContent = `第 ${this.index + 1} / ${total} 題`;
+        document.getElementById('quiz-progress-bar').style.width = `${((this.index + 1) / total) * 100}%`;
+        document.getElementById('quiz-book-cover').textContent = q.icon;
+        document.getElementById('quiz-book-title').textContent = q.title;
+        document.getElementById('quiz-book-desc').textContent = q.desc;
+
+        // Reset Feedback and Next button
+        document.getElementById('quiz-feedback-box').className = 'hidden';
+        document.getElementById('quiz-next-btn').classList.add('hidden');
+
+        // Render Options (4 choices)
+        const container = document.getElementById('quiz-options-container');
+        container.innerHTML = '';
+
+        q.options.forEach((catId, idx) => {
+          const cat = CATEGORIES.find(c => c.id === catId);
+          const btn = document.createElement('button');
+          btn.className = "quiz-opt-btn flex items-center justify-between p-3.5 rounded-2xl bg-white hover:bg-emerald-50 border-2 border-emerald-200 hover:border-emerald-500 shadow-sm transition active:scale-95 text-left";
+          btn.onclick = () => this.handleAnswer(catId, btn);
+          btn.innerHTML = `
+            <div class="flex items-center space-x-2.5">
+              <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">${idx + 1}</span>
+              <span class="text-xl">${cat.icon}</span>
+              <div>
+                <span class="text-xs font-black text-emerald-800 block">${cat.code} 櫃</span>
+                <span class="text-xs md:text-sm font-bold text-slate-800">${cat.name}</span>
+              </div>
+            </div>
+            <span class="text-slate-400 text-xs">選擇 ➔</span>
+          `;
+          container.appendChild(btn);
+        });
+      },
+
+      handleAnswer(selectedCat, clickedBtn) {
+        if (this.answered) return;
+        this.answered = true;
+        app.totalAnswered++;
+
+        const q = QUIZ_QUESTIONS[this.index];
+        const isCorrect = (selectedCat === q.correctCat);
+        const feedbackBox = document.getElementById('quiz-feedback-box');
+        const feedbackIcon = document.getElementById('quiz-feedback-icon');
+        const feedbackTitle = document.getElementById('quiz-feedback-title');
+        const feedbackText = document.getElementById('quiz-feedback-text');
+
+        // Disable options
+        const allBtns = document.querySelectorAll('.quiz-opt-btn');
+        allBtns.forEach(b => b.classList.add('pointer-events-none', 'opacity-60'));
+        clickedBtn.classList.remove('opacity-60');
+
+        if (isCorrect) {
+          sound.playCorrect();
+          app.correctAnswered++;
+          app.addStars(10);
+          clickedBtn.classList.add('border-emerald-500', 'bg-emerald-100');
+
+          feedbackBox.className = 'p-4 rounded-2xl border-2 mb-4 text-left bg-emerald-50 border-emerald-300 text-emerald-900 block';
+          feedbackIcon.textContent = '🌟';
+          feedbackTitle.textContent = '太棒了！分類完全正確！ (+10葉星)';
+          feedbackText.textContent = q.reason;
+        } else {
+          sound.playWrong();
+          clickedBtn.classList.add('border-rose-400', 'bg-rose-50');
+
+          // Highlight the actual correct button
+          allBtns.forEach((b, idx) => {
+            if (q.options[idx] === q.correctCat) {
+              b.classList.remove('opacity-60');
+              b.classList.add('border-emerald-500', 'bg-emerald-50');
+            }
+          });
+
+          const correctCatObj = CATEGORIES.find(c => c.id === q.correctCat);
+          feedbackBox.className = 'p-4 rounded-2xl border-2 mb-4 text-left bg-amber-50 border-amber-300 text-amber-900 block';
+          feedbackIcon.textContent = '💡';
+          feedbackTitle.textContent = `差一點點！這本其實屬於【${correctCatObj.code} ${correctCatObj.name}】喔！`;
+          feedbackText.textContent = q.reason;
+        }
+
+        document.getElementById('quiz-next-btn').classList.remove('hidden');
+      },
+
+      next() {
+        sound.playPop();
+        this.index++;
+        if (this.index < QUIZ_QUESTIONS.length) {
+          this.renderQuestion();
+        } else {
+          // Move to Stage 3
+          app.startStage(3);
+        }
+      }
+    };
+
+    const dragStage = {
+      books: [],
+      currentIndex: 0,
+
+      start() {
+        this.books = [...DRAG_BOOKS];
+        this.currentIndex = 0;
+        app.showScreen('drag');
+        this.renderShelves();
+        this.renderActiveBook();
+      },
+
+      renderActiveBook() {
+        const remainingEl = document.getElementById('drag-remaining-count');
+        const remaining = this.books.length - this.currentIndex;
+        remainingEl.textContent = remaining;
+
+        if (this.currentIndex >= this.books.length) {
+          // Finished stage 3, move to Boss!
+          setTimeout(() => {
+            app.startStage(4);
+          }, 600);
+          return;
+        }
+
+        const b = this.books[this.currentIndex];
+        document.getElementById('current-drag-book-icon').textContent = b.icon;
+        document.getElementById('current-drag-book-title').textContent = b.title;
+        document.getElementById('current-drag-book-clue').textContent = `線索：${b.clue}`;
+      },
+
+      renderShelves() {
+        const container = document.getElementById('shelves-grid');
+        container.innerHTML = '';
+
+        CATEGORIES.forEach(cat => {
+          const shelf = document.createElement('button');
+          shelf.className = "flex flex-col items-center justify-center p-3 rounded-2xl bg-bark-100 hover:bg-bark-200 border-2 border-bark-200 hover:border-emerald-500 shadow-sm transition active:scale-95 text-center group";
+          shelf.onclick = () => this.placeBook(cat.id, shelf);
+          shelf.innerHTML = `
+            <span class="text-xl md:text-2xl mb-1">${cat.icon}</span>
+            <span class="text-[10px] font-bold text-bark-700 bg-white/70 px-2 py-0.5 rounded-full">${cat.code}</span>
+            <span class="text-xs font-black text-slate-800 mt-1">${cat.name}</span>
+          `;
+          container.appendChild(shelf);
+        });
+      },
+
+      placeBook(shelfCatId, shelfBtn) {
+        if (this.currentIndex >= this.books.length) return;
+        const curBook = this.books[this.currentIndex];
+        app.totalAnswered++;
+
+        if (shelfCatId === curBook.targetCat) {
+          sound.playCorrect();
+          app.correctAnswered++;
+          app.addStars(15);
+          shelfBtn.classList.add('bg-emerald-200', 'border-emerald-500');
+          setTimeout(() => {
+            shelfBtn.classList.remove('bg-emerald-200', 'border-emerald-500');
+          }, 350);
+
+          this.currentIndex++;
+          this.renderActiveBook();
+        } else {
+          sound.playWrong();
+          shelfBtn.classList.add('bg-rose-200', 'border-rose-400');
+          setTimeout(() => {
+            shelfBtn.classList.remove('bg-rose-200', 'border-rose-400');
+          }, 350);
+        }
+      }
+    };
+
+    const bossStage = {
+      index: 0,
+      hp: 100,
+      combo: 0,
+
+      start() {
+        this.index = 0;
+        this.hp = 100;
+        this.combo = 0;
+        app.showScreen('boss');
+        this.renderQuestion();
+      },
+
+      renderQuestion() {
+        if (this.index >= BOSS_QUESTIONS.length || this.hp <= 0) {
+          // Boss Defeated!
+          sound.playCorrect();
+          app.addStars(30);
+          setTimeout(() => {
+            app.finishAdventure();
+          }, 800);
+          return;
+        }
+
+        const q = BOSS_QUESTIONS[this.index];
+        document.getElementById('boss-combo').textContent = this.combo;
+        document.getElementById('boss-question-title').textContent = q.title;
+        document.getElementById('boss-question-desc').textContent = q.clue;
+        document.getElementById('boss-hp-bar').style.width = `${this.hp}%`;
+
+        const container = document.getElementById('boss-options-grid');
+        container.innerHTML = '';
+
+        q.options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = "py-3.5 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-amber-400 text-amber-200 font-extrabold text-sm md:text-base transition active:scale-95";
+          btn.textContent = opt.name;
+          btn.onclick = () => this.answer(opt.id);
+          container.appendChild(btn);
+        });
+      },
+
+      answer(chosenCat) {
+        const q = BOSS_QUESTIONS[this.index];
+        app.totalAnswered++;
+
+        if (chosenCat === q.correct) {
+          sound.playCorrect();
+          app.correctAnswered++;
+          app.addStars(10);
+          this.combo++;
+          this.hp -= 25;
+          const sprite = document.getElementById('boss-sprite');
+          sprite.classList.add('rotate-12', 'opacity-50');
+          setTimeout(() => {
+            sprite.classList.remove('rotate-12', 'opacity-50');
+          }, 200);
+        } else {
+          sound.playWrong();
+          this.combo = 0;
+        }
+
+        this.index++;
+        this.renderQuestion();
+      }
+    };
+
+    // Keyboard support for 1~4 answer buttons
+    window.addEventListener('keydown', (e) => {
+      const key = e.key;
+      if (['1', '2', '3', '4'].includes(key)) {
+        const idx = parseInt(key) - 1;
+        const quizBtns = document.querySelectorAll('.quiz-opt-btn');
+        if (quizBtns && quizBtns[idx] && !quiz.answered) {
+          quizBtns[idx].click();
+        }
+      }
+    });
+
+    // Start App on Load
+    window.onload = () => {
+      app.init();
+    };
   </script>
 </body>
 </html>
